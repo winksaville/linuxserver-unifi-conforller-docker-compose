@@ -16,12 +16,12 @@ and the second choice is [jacobalberty/unify](https://hub.docker.com/r/jacobalbe
 
 I decide on using linuxserver because the documentation was clearer and it
 was obvious for me how to use it, copy the example to a local `docker-compose.yml` file
-and start it running. **But do not run with `docker-compose run --rm unifi-controller`** 
+and start it running. **In general do not run with `docker-compose run`**
 
 ## Start the unifi-controllwer with `up`
 
 The proper way to start `unifi-controller` is to use `docker-compose up`
-and you'll see 
+and you'll see:
 ```
 wink@3900x:~/docker/repos/linuxserver-unifi-controller
 $ docker-compose up
@@ -106,19 +106,20 @@ Removing network linuxserver-unifi-controller_default
 
 ## Lessons learned
 
-As mentioned above do not use `docker-compose run` instead
-read the [linuxserver/docker-compose documentation]()
-and use `docker-compose up | donw` as mentioned above.
+As mentioned above using `docker-compose run` doesn't work well,
+instead read the [linuxserver/docker-compose documentation](https://docs.linuxserver.io/general/docker-compose)
+and use `docker-compose up | down` as mentioned above.
 
 To read about that long story follow my
-[post to the linuxserver Discord channel](https://discordapp.com/channels/354974912613449730/506925392603512839/857446535011500032)
+[post to the linuxserver Discord channel](https://discordapp.com/channels/354974912613449730/506925392603512839/857446535011500032).
 The short story is [Adam Beardwood](https://www.linkedin.com/in/adam-beardwood-251105a/),
 aka [TheSpad](https://github.com/TheSpad) [directed me to use](https://discordapp.com/channels/354974912613449730/506925392603512839/857625468475801670)
 `ss -4ntlp` to definitively determine that the ports weren't EXPOSED
-to the host after I started unifi-controller when using
-`docker-compose run --rm unifi-controller`. In particular, below we see
-none of the ports enumerated in the docker-compose.yml file. Most
-importantly port 8443 is not listed:
+to the host. The reason is that using `docker-compose run --rm unifi-controller`
+does NOT expose the ports to the host by default. Although if you also pass
+the `--service-ports` flag it will. But in my case I didn't use `--service-ports`
+and as you can see below none of the ports enumerated in the docker-compose.yml file
+are available on the host side.
 ```
 wink@3900x:~
 $ ss -4ntlp
@@ -149,7 +150,8 @@ Removing linuxserver-unifi-controller_unifi-controller_run_3ecb3dfdde6a ... erro
 ERROR: for linuxserver-unifi-controller_unifi-controller_run_3ecb3dfdde6a  removal of container 14d27b6bd2f5b21144b316349ba23307eb74f40b5f28acaa02b05e021eafd18f is already in progress
 Removing network linuxserver-unifi-controller_default
 ```
-And then bring it backup `up`, which rebuilds it:
+And then bring it backup `up`, which rebuilds if necessary
+and by default does expose the ports to the host:
 ```
 wink@3900x:~/docker/repos/linuxserver-unifi-controller
 $ docker-compose up -d
